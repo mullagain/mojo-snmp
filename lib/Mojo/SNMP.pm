@@ -10,6 +10,7 @@ use constant MAXREPETITIONS => 10;
 our $VERSION = '0.12';
 
 my $DISPATCHER;
+my @NETSNMP_ARGS = qw(hostname port localaddr localport nonblocking version domain timeout retries maxmsgsize translate debug community username authkey authpassword authprotocol privkey privpassword privprotocol);
 my @EXCLUDE_METHOD_ARGS = qw( maxrepetitions );
 my %EXCLUDE             = (
   v1  => [qw( username authkey authpassword authprotocol privkey privpassword privprotocol )],
@@ -129,8 +130,7 @@ sub _new_session {
   my ($self, $args) = @_;
   my %snmpargs;
   if ($self->scrub_args) {
-    my @allowed_args = qw(hostname port localaddr localport nonblocking version domain timeout retries maxmsgsize translate debug community username authkey authpassword authprotocol privkey privpassword privprotocol);
-    foreach (@allowed_args) {
+    foreach (@NETSNMP_ARGS) {
       $snmpargs{$_} = $args->{$_} if (exists $args->{$_});
     }
   }
