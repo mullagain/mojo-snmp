@@ -26,6 +26,7 @@ $Net::SNMP::DISPATCHER = $Net::SNMP::DISPATCHER;    # avoid warning
 has concurrent     => 20;
 has defaults       => sub { +{} };
 has master_timeout => 0;
+has scrub_args => 0;
 has ioloop         => sub { Mojo::IOLoop->singleton };
 
 # these attributes are experimental and therefore not exposed. Let me know if
@@ -126,7 +127,18 @@ sub _finish {
 
 sub _new_session {
   my ($self, $args) = @_;
-  my ($session, $error) = Net::SNMP->new(%$args, nonblocking => 1);
+  my %snmpargs;
+  if ($self->scrub_args) {
+    my @allowed_args = qw(hostname port localaddr localport nonblocking version domain timeout retries maxmsgsize translate debug community username authkey authpassword authprotocol privkey privpassword privprotocol);
+    foreach (@allowed_args) {
+      $snmpargs{$_} = $args->{$_} if (exists $args->{$_});
+    }
+  }
+  else {
+    %snmpargs = %$args;
+  }
+  $snmpargs{nonblocking} = 1;
+  my ($session, $error) = Net::SNMP->new(%snmpargs);
 
   warn "[Mojo::SNMP] New session $args->{hostname}: ", ($error || 'OK'), "\n" if DEBUG;
   Mojo::IOLoop->next_tick(sub { $self->emit(error => "$args->{hostname}: $error") }) if $error;
